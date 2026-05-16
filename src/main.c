@@ -1,48 +1,41 @@
-#include <stdio.h>
 #include "utils/logger.h"
 #include "airplane/airplane.h"
 #include "queue/queue.h"
+#include "manager/manager.h"
+
+void testQueue(void);
 
 int main(void)
 {
-    printf("logger test\n");
-    LOG_INFO("This is an info message. %s", "Hello, World!");
-    LOG_WARNING("This is a warning message. %d", 42);
-    LOG_ERROR("This is an error message. %f", 3.14);
+    init_queue(&landing_queue_1);
+    init_queue(&landing_queue_2);
+    init_queue(&takeoff_queue_1);
+    LOG_INFO("Initialized queues: landing_queue_1, landing_queue_2, takeoff_queue_1");
 
-    int num_planes = 5;
-    Airplane planes[5] = {
-        {get_new_plane_id(), PLANE_LANDING, PLANE_WAITING, 100, false, 0, -1, 0},
-        {get_new_plane_id(), PLANE_TAKEOFF, PLANE_WAITING, 80, false, 0, -1, 0},
-        {get_new_plane_id(), PLANE_LANDING, PLANE_WAITING, 120, true, 0, -1, 0},
-        {get_new_plane_id(), PLANE_TAKEOFF, PLANE_WAITING, 90, false, 0, -1, 0},
-        {get_new_plane_id(), PLANE_LANDING, PLANE_WAITING, 110, false, 0, -1, 0}
-    };
+    phase_one_enqueue_new_planes();
 
-    Queue landing_queue;
-    init_queue(&landing_queue);
-    for (int i = 0; i < num_planes; i++) {
-        if (enqueue(&landing_queue, planes[i])) {
-            LOG_INFO("Enqueued plane ID: %d", planes[i].id);
-        } else {
-            LOG_WARNING("Failed to enqueue plane ID: %d (queue may be full)\n", planes[i].id);
-        }
-    }
-    print_queue(&landing_queue);
-    printf("\n-----------------------------------\n");
-    // filter finished planes while preserving original order
-    const int initial_size = landing_queue.size;
-    for (int i = 0; i < initial_size; i++) {
-        Airplane plane;
-        if (dequeue(&landing_queue, &plane)) {
-            if (!plane.finished) {
-                enqueue(&landing_queue, plane);
-            } else {
-                LOG_INFO("Plane ID: %d is finished and removed from the queue.\n", plane.id);
-            }
-        }
-    }
-
-    print_queue(&landing_queue);
     return 0;
+}
+
+
+void testQueue() {
+    Airplane new_set[3];
+    int num_planes = create_new_plane_set_arriving(new_set);
+    LOG_INFO("Created %d new planes arriving:", num_planes);
+    for (int i = 0; i < num_planes; i++) {
+        LOG_INFO("Plane ID: %d, Type: %s, Status: %s, Fuel: %d",
+               new_set[i].id,
+               new_set[i].type == PLANE_LANDING ? "Landing" : "Takeoff",
+               new_set[i].status == PLANE_WAITING ? "Waiting" :
+               new_set[i].status == PLANE_QUEUED ? "Queued" :
+               new_set[i].status == PLANE_FINISHED ? "Finished" : "Crashed",
+               new_set[i].fuel);
+        if (!enqueue(&landing_queue_1, new_set[i])) {
+            LOG_ERROR("Failed to enqueue plane ID %d into landing_queue_1", new_set[i].id);
+        } else {
+            LOG_INFO("Enqueued plane ID %d into landing_queue_1", new_set[i].id);
+        }
+    }
+    LOG_INFO("Current state of landing_queue_1 after enqueuing new planes:");
+    print_queue(&landing_queue_1);
 }

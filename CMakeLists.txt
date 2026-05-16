@@ -11,4 +11,8 @@ add_executable(sim src/main.c
         src/airplane/airplane.c
         src/airplane/airplane.h
         src/utils/settings.h
+        src/utils/misc.c
+        src/utils/misc.h
+        src/manager/manager.c
+        src/manager/manager.h
 )

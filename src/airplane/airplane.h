@@ -1,6 +1,5 @@
 #ifndef SIM_AIRPLANE_H
 #define SIM_AIRPLANE_H
-#include <stdbool.h>
 
 typedef enum {
     PLANE_LANDING,
@@ -9,8 +8,8 @@ typedef enum {
 
 typedef enum {
     PLANE_WAITING,
-    PLANE_LANDED,
-    PLANE_STARTED,
+    PLANE_QUEUED,
+    PLANE_FINISHED,
     PLANE_CRASHED
 } PlaneStatus;
 
@@ -19,7 +18,6 @@ typedef struct airplane {
     PlaneType type;
     PlaneStatus status;
     int fuel;
-    bool finished;
     int time_in_queue;
     int runway;
     int time_processed;
@@ -27,4 +25,38 @@ typedef struct airplane {
 
 extern int get_new_plane_id();
 
+int create_new_plane_set_arriving(Airplane *plane_set);
+int create_new_plane_set_departing(Airplane *plane_set);
+
+void print_airplane(const Airplane *plane);
+
 #endif
+
+/*
++-----------------------+         +-----------------------+
+|       <<enum>>        |         |       <<enum>>        |
+|       PlaneType       |         |      PlaneStatus      |
++-----------------------+         +-----------------------+
+| + PLANE_LANDING       |         | + PLANE_WAITING       |
+| + PLANE_TAKEOFF       |         | + PLANE_QUEUED        |
++-----------------------+         | + PLANE_FINISHED      |
+             ^                    | + PLANE_CRASHED       |
+             |                    +-----------------------+
+             |                                ^
+             |                                |
+             +---------------+----------------+
+                             |
++---------------------------------------------------------+
+|                       <<struct>>                        |
+|                        Airplane                         |
++---------------------------------------------------------+
+| + id: int                                               |
+| + type: PlaneType                                       |
+| + status: PlaneStatus                                   |
+| + fuel: int                                             |
+| + time_in_queue: int                                    |
+| + runway: int                                           |
+| + time_processed: int                                   |
++---------------------------------------------------------+
+ *
+ */
