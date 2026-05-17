@@ -20,7 +20,7 @@ bool is_queue_full(const Queue *q);
 bool enqueue(Queue *q, Airplane plane);
 bool dequeue(Queue *q, Airplane *plane);
 
-bool enqueue_arr(Queue *queue, const Airplane *planes, int num_planes);
+bool enqueue_arr(Queue *queue, Airplane *planes, int num_planes);
 
 Airplane peek_queue_first(const Queue *q);
 Airplane peek_queue_last(const Queue *q);
