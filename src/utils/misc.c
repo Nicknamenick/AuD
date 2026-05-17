@@ -27,3 +27,7 @@ uint32_t rand_xor(void) {
     rng_state = x;
     return x;
 }
+
+int abs_int(const int value) {
+    return value < 0 ? -value : value;
+}

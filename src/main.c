@@ -1,41 +1,91 @@
+#include <stdio.h>
 #include "utils/logger.h"
 #include "airplane/airplane.h"
 #include "queue/queue.h"
 #include "manager/manager.h"
+#include "prioSys/prioQueue.h"
 
-void testQueue(void);
+PrioQueueConfig prio_config;
 
-int main(void)
-{
+// TODO - log finished or crashed planes and remove them from the queues in process_simulation_tick, instead of just decreasing fuel and collecting crashes. This will prevent the queues from filling up with crashed planes that are still taking up space and affecting prioritization.
+
+int main(void) {
     init_queue(&landing_queue_1);
     init_queue(&landing_queue_2);
     init_queue(&takeoff_queue_1);
+    init_prio_queue_config(&prio_config);
+
+
     LOG_INFO("Initialized queues: landing_queue_1, landing_queue_2, takeoff_queue_1");
+    for (int i = 0; i < 100; i++) {
+        //phase 1 -> new planes
+        Airplane new_planes_arr[UPPER_PLANE_ARRIVAL_RATE];
+        Airplane new_planes_dep[UPPER_PLANE_DEPARTURE_RATE];
 
-    phase_one_enqueue_new_planes();
+        const int num_arriving = phase_one_sort_new_planes_arr(new_planes_arr);
+        const int num_departing = phase_one_sort_new_planes_dep(new_planes_dep);
 
-    return 0;
-}
+        //phase 2 -> set priorities and enqueue new planes
+        enqueue_landing_with_prio(new_planes_arr, num_arriving, &landing_queue_1, &landing_queue_2, &prio_config);
+        enqueue_emergency_planes();
+        enqueue_arr(&takeoff_queue_1, new_planes_dep, num_departing);
 
+        //phase 3 -> processing queues
+        check_crash_in_queue(&landing_queue_1);
+        check_crash_in_queue(&landing_queue_2);
+        check_crash_in_queue(&emergency_queue);
+        const int emergency_code = process_emergency_queue();
 
-void testQueue() {
-    Airplane new_set[3];
-    int num_planes = create_new_plane_set_arriving(new_set);
-    LOG_INFO("Created %d new planes arriving:", num_planes);
-    for (int i = 0; i < num_planes; i++) {
-        LOG_INFO("Plane ID: %d, Type: %s, Status: %s, Fuel: %d",
-               new_set[i].id,
-               new_set[i].type == PLANE_LANDING ? "Landing" : "Takeoff",
-               new_set[i].status == PLANE_WAITING ? "Waiting" :
-               new_set[i].status == PLANE_QUEUED ? "Queued" :
-               new_set[i].status == PLANE_FINISHED ? "Finished" : "Crashed",
-               new_set[i].fuel);
-        if (!enqueue(&landing_queue_1, new_set[i])) {
-            LOG_ERROR("Failed to enqueue plane ID %d into landing_queue_1", new_set[i].id);
-        } else {
-            LOG_INFO("Enqueued plane ID %d into landing_queue_1", new_set[i].id);
+        if (emergency_code == -1) {
+            LOG_ERROR("Invalid emergency code returned from process_emergency_queue: %d", emergency_code);
+            return 0;
         }
+        if (emergency_code == 0) {
+            process_landing_queue(&landing_queue_1, 1);
+            process_landing_queue(&landing_queue_2, 2);
+            process_landing_queue(&takeoff_queue_1, 3);
+        }
+        if (emergency_code == 3) {
+            process_landing_queue(&landing_queue_1, 1);
+            process_landing_queue(&landing_queue_2, 2);
+        }
+        if (emergency_code == 2) {
+            process_landing_queue(&landing_queue_1, 1);
+        }
+        if (emergency_code == 1) {
+            LOG_WARNING("!!!!all runways are occupied with emergency landings, skipping normal landing processing for this tick.!!!!");
+        }
+
+        process_simulation_tick();
+
+        double avg_landing = 0.0;
+        double avg_takeoff = 0.0;
+        get_average_wait_times(&avg_landing, &avg_takeoff);
+
+
+        print_queue(&landing_queue_1);
+        print_queue(&landing_queue_2);
+        print_queue(&emergency_queue);
+        print_queue(&takeoff_queue_1);
+
+        printf("\n");
+        LOG_INFO("QUEUE SIZES: landing_queue_1: %d, landing_queue_2: %d, emergency_queue: %d, takeoff_queue_1: %d",
+                 queue_size(&landing_queue_1), queue_size(&landing_queue_2),
+                 queue_size(&emergency_queue), queue_size(&takeoff_queue_1));
+        printf("\n");
+        LOG_INFO("AVG WAIT: landing=%.2f, takeoff=%.2f", avg_landing, avg_takeoff);
+
+        int crash_ids[QUEUE_CAPACITY * 3];
+        const int crash_count = get_last_tick_crashes(crash_ids, QUEUE_CAPACITY * 3);
+        if (crash_count == 0) {
+            LOG_INFO("CRASHES LAST TICK: none");
+        } else {
+            LOG_WARNING("CRASHES LAST TICK (count: %d):", crash_count);
+            for (int j = 0; j < crash_count; j++) {
+                LOG_INFO("  Plane ID: %d", crash_ids[j]);
+            }
+        }
+        LOG_INFO("---------------------------------------- End of tick %d ----------------------------------------", i + 1);
     }
-    LOG_INFO("Current state of landing_queue_1 after enqueuing new planes:");
-    print_queue(&landing_queue_1);
+    return 0;
 }

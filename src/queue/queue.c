@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include "queue.h"
+
+#include <stdlib.h>
+
 #include "../airplane/airplane.h"
 #include "../utils/logger.h"
 
@@ -15,16 +18,18 @@ void init_queue(Queue *q) {
 }
 /* Enqueues an airplane into the queue.
  * Returns true if successful, false if the queue is full. */
-bool enqueue(Queue *q, const Airplane plane) {
+bool enqueue(Queue *q, Airplane plane) {
     if (is_queue_full(q)) return false;
+    plane.status = PLANE_QUEUED;
     q->data[q->tail] = plane;
     q->tail = (q->tail + 1) % QUEUE_CAPACITY;
     q->size++;
     return true;
 }
 
-bool enqueue_arr(Queue *queue, const Airplane *planes, const int num_planes) {
+bool enqueue_arr(Queue *queue, Airplane *planes, const int num_planes) {
     for (int i = 0; i < num_planes; i++) {
+        planes[i].status = PLANE_QUEUED;
         if (!enqueue(queue, planes[i])) {
             LOG_ERROR("Failed to enqueue plane ID %d into queue: %p", planes[i].id, (void*)queue);
             return false;
@@ -59,10 +64,10 @@ int queue_size(const Queue *q) {
 
 /* Prints the contents of the queue for debugging purposes. */
 void print_queue(const Queue *q) {
-    LOG_INFO("Queue (size: %d):", q->size);
+    LOG_INFO("Queue %p (size: %d):", q, q->size);
     for (int i = 0; i < q->size; i++) {
-        int index = (q->head + i) % QUEUE_CAPACITY;
-        Airplane plane = q->data[index];
+        const int index = (q->head + i) % QUEUE_CAPACITY;
+        const Airplane plane = q->data[index];
         LOG_INFO("  Plane ID: %d, Type: %s, Status: %s, Fuel: %d",
                plane.id,
                plane.type == PLANE_LANDING ? "Landing" : "Takeoff",

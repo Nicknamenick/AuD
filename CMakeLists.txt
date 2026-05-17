@@ -8,6 +8,8 @@ add_executable(sim src/main.c
         src/utils/logger.h
         src/queue/queue.c
         src/queue/queue.h
+        src/prioSys/prioQueue.c
+        src/prioSys/prioQueue.h
         src/airplane/airplane.c
         src/airplane/airplane.h
         src/utils/settings.h
@@ -15,4 +17,7 @@ add_executable(sim src/main.c
         src/utils/misc.h
         src/manager/manager.c
         src/manager/manager.h
+        src/prioSys/prioEarly.c
+        src/prioSys/prioEarly.h
+        src/prioSys/prioQueue.c
 )
