@@ -18,7 +18,7 @@ void init_prio_queue_config(PrioQueueConfig *config) {
     config->fuel_gap_weight = 3;
     config->size_balance_weight = 60;
     config->tie_breaker_queue = 1;
-    config->fuel_risk_weight = 10;
+    config->fuel_risk_weight = 70;
 }
 
 /*  */
@@ -54,9 +54,15 @@ static int total_score_with_balance(const Queue *q, const Airplane *buffer, cons
                                     const int other_size) {
     const int fuel_gap = fuel_gap_score(q, buffer, buffer_size, plane);
     const int size_after = queue_size(q) + buffer_size + 1;
+    const int risk = queue_risk_value(q, buffer_size, plane);
     const int imbalance = size_after > other_size ? (size_after - other_size) : 0;
+    const int risk_penalty = risk > 0 ? risk : 0;
+    if (risk_penalty > 0) {
+        LOG_WARNING("Plane ID %d has risk of running out of fuel: %d, adding risk score: %d", plane->id, risk_penalty, config->fuel_risk_weight * risk_penalty);
+    }
     return (config->fuel_gap_weight * fuel_gap)
-           + (config->size_balance_weight * imbalance);
+           + (config->size_balance_weight * imbalance)
+           + (config->fuel_risk_weight * risk_penalty);
 }
 
 /* picks a queue according to the score */
@@ -76,18 +82,6 @@ static int pick_queue(const Airplane *plane,
     }
     if (size2 >= QUEUE_CAPACITY) {
         return 1;
-    }
-
-    const int risk1 = queue_risk_value(q1, buffer1_size, plane);
-    const int risk2 = queue_risk_value(q2, buffer2_size, plane);
-
-    if (risk1 > 0 || risk2 > 0) {
-        if (risk1 < risk2) {
-            return 1;
-        }
-        if (risk2 < risk1) {
-            return 2;
-        }
     }
 
     const int score1 = total_score_with_balance(q1, buffer1, buffer1_size, plane, config, size2);

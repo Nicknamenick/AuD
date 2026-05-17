@@ -9,7 +9,7 @@
 #define EMERGENCY_FUEL_THRESHOLD 2
 
 #define UPPER_PLANE_ARRIVAL_RATE 3 // max number of planes arriving at the same tick
-#define LOWER_PLANE_ARRIVAL_RATE 3 // min number of planes arriving at the same tick
+#define LOWER_PLANE_ARRIVAL_RATE 2 // min number of planes arriving at the same tick
 
 #define UPPER_PLANE_DEPARTURE_RATE 1 // max number of planes departing at the same tick
 #define LOWER_PLANE_DEPARTURE_RATE 0 // min number of planes departing at the same tick

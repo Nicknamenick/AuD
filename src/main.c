@@ -10,6 +10,7 @@ PrioQueueConfig prio_config;
 // TODO - log finished or crashed planes and remove them from the queues in process_simulation_tick, instead of just decreasing fuel and collecting crashes. This will prevent the queues from filling up with crashed planes that are still taking up space and affecting prioritization.
 
 int main(void) {
+    int crashes_total = 0;
     init_queue(&landing_queue_1);
     init_queue(&landing_queue_2);
     init_queue(&takeoff_queue_1);
@@ -17,7 +18,7 @@ int main(void) {
 
 
     LOG_INFO("Initialized queues: landing_queue_1, landing_queue_2, takeoff_queue_1");
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 200; i++) {
         //phase 1 -> new planes
         Airplane new_planes_arr[UPPER_PLANE_ARRIVAL_RATE];
         Airplane new_planes_dep[UPPER_PLANE_DEPARTURE_RATE];
@@ -81,11 +82,13 @@ int main(void) {
             LOG_INFO("CRASHES LAST TICK: none");
         } else {
             LOG_WARNING("CRASHES LAST TICK (count: %d):", crash_count);
+            crashes_total += crash_count;
             for (int j = 0; j < crash_count; j++) {
                 LOG_INFO("  Plane ID: %d", crash_ids[j]);
             }
         }
         LOG_INFO("---------------------------------------- End of tick %d ----------------------------------------", i + 1);
     }
+    LOG_INFO("Simulation finished. Total crashes: %d", crashes_total);
     return 0;
 }
