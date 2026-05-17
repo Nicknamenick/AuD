@@ -10,6 +10,8 @@
 #include "../queue/queue.h"
 #include "../prioSys/prioEarly.h"
 
+int crashes_total = 0;
+
 static long long total_wait_landing = 0;
 static long long total_wait_takeoff = 0;
 static int count_landing_processed = 0;
@@ -43,7 +45,7 @@ bool enqueue_emergency_planes() {
                 if (!enqueue(&emergency_queue, plane)) {
                     LOG_ERROR("Failed to enqueue emergency plane ID %d into emergency queue.", plane.id);
                 } else {
-                    LOG_INFO("Enqueued emergency plane ID %d into emergency queue.", plane.id);
+                    LOG_WARNING("Enqueued emergency plane ID %d into emergency queue.", plane.id);
                 }
             } else {
                 if (!enqueue(&landing_queue_1, plane)) {
@@ -109,9 +111,22 @@ int process_emergency_queue() {
         return 0;
     }
     const int num_emergency = queue_size(&emergency_queue);
+    Airplane temp_planes[QUEUE_CAPACITY];
+    for (int i = 0; i < num_emergency; i++) {
+        if (!dequeue(&emergency_queue, &temp_planes[i])) {
+            LOG_ERROR("Failed to dequeue plane from emergency queue during processing.");
+            return -1;
+        }
+        if (!enqueue(&emergency_queue, temp_planes[i])) {
+            LOG_ERROR("Failed to re-enqueue plane ID %d back into emergency queue during processing.", temp_planes[i].id);
+            return -1;
+        }
+    }
+
     LOG_WARNING("---------->Processing emergency queue with %d planes.<-------------", num_emergency);
     if (num_emergency == 1) {
-        LOG_WARNING("enabling runway 3 for emergency landing due to 1 plane in emergency queue.");
+        LOG_WARNING("enabling runway 3 for plane %d: emergency landing due to 1 plane in emergency queue.",
+            temp_planes[0].id);
         process_landing_queue(&emergency_queue, 3);
         return 3;
     } else if (num_emergency == 2) {
@@ -175,7 +190,7 @@ static void collect_crashes_from_queue(Queue *q) {
  *  - remove any planes that have finished or crashed from the queues
  *  - increase time in queue for all planes in the queues
  */
-void process_simulation_tick() {
+void update_simulation_tick() {
     last_tick_crash_count = 0;
     // Decrease fuel for all planes in landing queues and emergency queue
     for (int i = 0; i < landing_queue_1.size; i++) {
@@ -192,6 +207,11 @@ void process_simulation_tick() {
         const int index = (emergency_queue.head + i) % QUEUE_CAPACITY;
         emergency_queue.data[index].fuel--;
         emergency_queue.data[index].time_in_queue++;
+    }
+
+    for (int i = 0; i < takeoff_queue_1.size; i++) {
+        const int index = (takeoff_queue_1.head + i) % QUEUE_CAPACITY;
+        takeoff_queue_1.data[index].time_in_queue++;
     }
 
     collect_crashes_from_queue(&landing_queue_1);
@@ -220,5 +240,6 @@ int get_last_tick_crashes(int *out_ids, int max_ids) {
     for (int i = 0; i < count; i++) {
         out_ids[i] = last_tick_crashes[i];
     }
+    crashes_total += count;
     return count;
 }

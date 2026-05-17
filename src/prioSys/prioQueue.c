@@ -35,17 +35,13 @@ static int fuel_gap_score(const Queue *q, const Airplane *buffer, const int buff
         LOG_INFO("Fuel gap for plane ID %d with queue: %d", plane->id, fuel_gap);
         return abs_int(fuel_gap);
     }
-    LOG_WARNING("Fuel gap for plane ID %d with empty queue: 0", plane->id);
+    //LOG_WARNING("Fuel gap for plane ID %d with empty queue: 0", plane->id);
     return 0;
 }
 /* Calculates the risk of the plane running out of fuel */
 static int queue_risk_value(const Queue *q, const int buffer_size, const Airplane *plane) {
     const int size_after = queue_size(q) + buffer_size + 1;
     const int risk = size_after - plane->fuel;
-    if (risk > 0) {
-        LOG_WARNING("Plane ID %d has risk of running out of fuel: %d (size after: %d, fuel: %d)",
-                    plane->id, risk, size_after, plane->fuel);
-    }
     return risk;
 }
 /* Calculates the score according to the config */
@@ -57,8 +53,8 @@ static int total_score_with_balance(const Queue *q, const Airplane *buffer, cons
     const int risk = queue_risk_value(q, buffer_size, plane);
     const int imbalance = size_after > other_size ? (size_after - other_size) : 0;
     const int risk_penalty = risk > 0 ? risk : 0;
-    if (risk_penalty > 0) {
-        LOG_WARNING("Plane ID %d has risk of running out of fuel: %d, adding risk score: %d", plane->id, risk_penalty, config->fuel_risk_weight * risk_penalty);
+    if (risk_penalty > 5) {
+        LOG_WARNING("Plane ID %d has high risk of running out of fuel: %d, adding risk score: %d", plane->id, risk_penalty, config->fuel_risk_weight * risk_penalty);
     }
     return (config->fuel_gap_weight * fuel_gap)
            + (config->size_balance_weight * imbalance)

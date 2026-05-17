@@ -1,0 +1,3 @@
+# Optional dependencies (uncomment or add to install):
+# pywinauto>=0.6.8   # GUI automation on Windows
+# colorama>=0.4.6    # colored console output (optional)
