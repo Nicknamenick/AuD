@@ -6,7 +6,7 @@
 
 #define UPPER_FUEL_LIMIT 10
 #define LOWER_FUEL_LIMIT 4
-#define EMERGENCY_FUEL_THRESHOLD 3
+#define EMERGENCY_FUEL_THRESHOLD 2 // 2 => 1
 
 #define UPPER_PLANE_ARRIVAL_RATE 3 // max number of planes arriving at the same tick
 #define LOWER_PLANE_ARRIVAL_RATE 2 // min number of planes arriving at the same tick

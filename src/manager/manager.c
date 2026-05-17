@@ -122,10 +122,10 @@ int process_emergency_queue() {
             return -1;
         }
     }
-
+    // TODO add prio based on queue size
     LOG_WARNING("---------->Processing emergency queue with %d planes.<-------------", num_emergency);
     if (num_emergency == 1) {
-        LOG_WARNING("enabling runway 3 for plane %d: emergency landing due to 1 plane in emergency queue.",
+        LOG_WARNING("using prio for plane %d: emergency landing due to 1 plane in emergency queue.",
             temp_planes[0].id);
         process_landing_queue(&emergency_queue, 3);
         return 3;

@@ -109,6 +109,8 @@ void render_dashboard(const int tick_number, const double avg_landing, const dou
     fprintf(stdout, "%s\n", border);
     fprintf(stdout, "| AIRPORT SIMULATION DASHBOARD                                                      |\n");
     fprintf(stdout, "| Tick: %-75d |\n", tick_number);
+    fprintf(stdout, "| %-30s %-5.02f %-45s|\n", "average arrival rate: ", (double) (LOWER_PLANE_ARRIVAL_RATE + UPPER_PLANE_ARRIVAL_RATE) / 2, "");
+    fprintf(stdout, "| %-30s %-5.02f %-45s|\n", "average departure rate: ", (double) (LOWER_PLANE_DEPARTURE_RATE + UPPER_PLANE_DEPARTURE_RATE) / 2, "");
     fprintf(stdout, "%s\n", border);
     fprintf(stdout, "| %-18s | %5d | %-52s |\n", "new_planes_arr", queue_size(&temp_q1), new_arr_buffer);
     fprintf(stdout, "| %-18s | %5d | %-52s |\n", "new_planes_dep", queue_size(&temp_q2), new_dep_buffer);

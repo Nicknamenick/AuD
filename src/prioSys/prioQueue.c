@@ -15,10 +15,10 @@ void init_prio_queue_config(PrioQueueConfig *config) {
     if (!config) {
         return;
     }
-    config->fuel_gap_weight = 3;
-    config->size_balance_weight = 60;
-    config->tie_breaker_queue = 1;
-    config->fuel_risk_weight = 70;
+    config->fuel_gap_weight = 20;
+    config->size_balance_weight = 10;
+    config->tie_breaker_queue = 2;
+    config->fuel_risk_weight = 60;
 }
 
 /*  */
