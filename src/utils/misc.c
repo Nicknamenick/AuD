@@ -31,3 +31,12 @@ uint32_t rand_xor(void) {
 int abs_int(const int value) {
     return value < 0 ? -value : value;
 }
+
+bool array_contains_int(const int *arr, int size, int value) {
+    for (int i = 0; i < size; i++) {
+        if (arr[i] == value) {
+            return true;
+        }
+    }
+    return false;
+}

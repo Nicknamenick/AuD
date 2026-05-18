@@ -9,8 +9,10 @@
 #include "../utils/settings.h"
 #include "../queue/queue.h"
 #include "../prioSys/prioEarly.h"
+#include "../utils/misc.h"
 
 int crashes_total = 0;
+int total_emergencies = 0;
 
 static long long total_wait_landing = 0;
 static long long total_wait_takeoff = 0;
@@ -105,13 +107,72 @@ void process_landing_queue(Queue *landing_queue, int runway_id) {
  * If there is only one plane in the emergency queue, it will be processed on runway 3. If there are 2-3 planes, they will be processed on runway 1 and 2. If there are more than 3 planes, it will log a warning and only process the first 3 planes, as the simulation only has 3 runways.
  * Returns the number of planes processed from the emergency queue, or -1 if there are more
  */
-int process_emergency_queue() {
+int pick_queue_for_emergency(const int num_emergency, int *used_queues) {
+    used_queues[0] = 0;
+    used_queues[1] = 0;
+    used_queues[2] = 0;
+    const int size_q1 = queue_size(&landing_queue_1);
+    const int size_q2 = queue_size(&landing_queue_2);
+    const int size_takeoff = queue_size(&takeoff_queue_1);
+
+    if (num_emergency == 1) {
+        if (size_q1 < size_takeoff || size_q2 < size_takeoff) {
+            if (size_q1 < size_q2) {
+                used_queues[0] = 1;
+            } else {
+                used_queues[0] = 2;
+            }
+        } else {
+            used_queues[0] = 3;
+        }
+    } else if (num_emergency == 2) {
+        if (size_q1 < size_takeoff || size_q2 < size_takeoff) {
+            if (size_q1 < size_q2) {
+                used_queues[0] = 1;
+                if (size_q2 < size_takeoff) {
+                    used_queues[1] = 2;
+                } else {
+                    used_queues[1] = 3;
+                }
+            } else {
+                used_queues[0] = 2;
+                if (size_q1 < size_takeoff) {
+                    used_queues[1] = 1;
+                } else {
+                    used_queues[1] = 3;
+                }
+            }
+        }else {
+            if (size_q1 < size_q2) {
+                used_queues[0] = 1;
+                used_queues[1] = 3;
+            } else {
+                used_queues[0] = 2;
+                used_queues[1] = 3;
+            }
+        }
+    } else if (num_emergency > 2) {
+        used_queues[0] = 1;
+        used_queues[1] = 2;
+        used_queues[2] = 3;
+    }
+    return 0;
+}
+
+int process_emergency_queue(int *used_emergency_lanes) {
     if (is_queue_empty(&emergency_queue)) {
         LOG_INFO("No emergency planes to process.");
         return 0;
     }
     const int num_emergency = queue_size(&emergency_queue);
     Airplane temp_planes[QUEUE_CAPACITY];
+    pick_queue_for_emergency(num_emergency, used_emergency_lanes);
+
+
+    LOG_WARNING("Processing %d planes in emergency queue. Assigned runways: %d, %d, %d",
+        num_emergency, used_emergency_lanes[0],
+        used_emergency_lanes[1], used_emergency_lanes[2]);
+
     for (int i = 0; i < num_emergency; i++) {
         if (!dequeue(&emergency_queue, &temp_planes[i])) {
             LOG_ERROR("Failed to dequeue plane from emergency queue during processing.");
@@ -122,26 +183,18 @@ int process_emergency_queue() {
             return -1;
         }
     }
-    // TODO add prio based on queue size
+
     LOG_WARNING("---------->Processing emergency queue with %d planes.<-------------", num_emergency);
-    if (num_emergency == 1) {
-        LOG_WARNING("using prio for plane %d: emergency landing due to 1 plane in emergency queue.",
-            temp_planes[0].id);
-        process_landing_queue(&emergency_queue, 3);
-        return 3;
-    } else if (num_emergency == 2) {
-        LOG_WARNING("enabling runway 2 and 3 for emergency landing due to 2 planes in emergency queue.");
-        process_landing_queue(&emergency_queue, 2);
-        process_landing_queue(&emergency_queue, 3);
-        return 2;
-    } else if (num_emergency > 2) {
-        LOG_WARNING("enabling runway 1, 2 and 3 for emergency landing due to %d planes in emergency queue.", num_emergency);
-        process_landing_queue(&emergency_queue, 1);
-        process_landing_queue(&emergency_queue, 2);
-        process_landing_queue(&emergency_queue, 3);
-        return 1;
+    for (int i = 0; i < num_emergency; i++) {
+        if (i > 2) {
+            LOG_WARNING("More than 3 planes in emergency queue, only processing the first 3 planes. Plane ID %d will have to wait for the next tick.", temp_planes[i].id);
+            break;
+        }
+        process_landing_queue(&emergency_queue, used_emergency_lanes[i]);
+        LOG_WARNING("Processed emergency plane ID %d on runway %d.", temp_planes[i].id, used_emergency_lanes[i]);
     }
-    return -1; // should never reach here
+    total_emergencies += num_emergency;
+    return 0;
 }
 
 int check_crash_in_queue(Queue *q) {

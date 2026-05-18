@@ -5,6 +5,7 @@
 #include "../queue/queue.h"
 
 extern int crashes_total;
+extern int total_emergencies;
 
 int phase_one_sort_new_planes_arr(Airplane *planes);
 int phase_one_sort_new_planes_dep(Airplane *planes);
@@ -13,7 +14,7 @@ bool enqueue_emergency_planes();
 
 int check_crash_in_queue(Queue *q);
 void process_landing_queue(Queue *landing_queue, int runway_id);
-int process_emergency_queue();
+int process_emergency_queue(int *used_emergency_lanes);
 
 void update_simulation_tick();
 

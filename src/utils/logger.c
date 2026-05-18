@@ -142,8 +142,9 @@ void render_dashboard(const int tick_number, const double avg_landing, const dou
         }
         fprintf(stdout, "| %-18s | %5d | %-52s |\n", "crashes_last_tick", crash_count, crash_buffer);
     }
-    //total crashes
+    //total values
     fprintf(stdout, "| %-18s | %5d | %-52s |\n", "crashes_total", crashes_total, "Total crashes so far");
+    fprintf(stdout, "| %-18s | %5d | %-52s |\n", "total_emergencies", total_emergencies, "Total emergencies so far");
     fprintf(stdout, "%s\n", border);
     fflush(stdout);
 }
