@@ -5,7 +5,8 @@
 #include "../queue/queue.h"
 
 extern int crashes_total;
-extern int total_emergencies;
+extern int total_emergencies_1;
+extern int total_emergencies_2;
 
 int phase_one_sort_new_planes_arr(Airplane *planes);
 int phase_one_sort_new_planes_dep(Airplane *planes);

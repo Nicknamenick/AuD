@@ -12,7 +12,8 @@
 #include "../utils/misc.h"
 
 int crashes_total = 0;
-int total_emergencies = 0;
+int total_emergencies_1 = 0;
+int total_emergencies_2 = 0;
 
 static long long total_wait_landing = 0;
 static long long total_wait_takeoff = 0;
@@ -191,9 +192,14 @@ int process_emergency_queue(int *used_emergency_lanes) {
             break;
         }
         process_landing_queue(&emergency_queue, used_emergency_lanes[i]);
-        LOG_WARNING("Processed emergency plane ID %d on runway %d.", temp_planes[i].id, used_emergency_lanes[i]);
+        LOG_WARNING("Processed emergency plane ID %d on runway %d. (Original Runway: %d)",
+            temp_planes[i].id, used_emergency_lanes[i], temp_planes[i].runway);
+        if (temp_planes[i].runway == 1) {
+            total_emergencies_1++;
+        } else if (temp_planes[i].runway == 2) {
+            total_emergencies_2++;
+        }
     }
-    total_emergencies += num_emergency;
     return 0;
 }
 

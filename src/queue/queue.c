@@ -6,10 +6,10 @@
 #include "../airplane/airplane.h"
 #include "../utils/logger.h"
 
-Queue landing_queue_1 = { .head = 0, .tail = 0, .size = 0 };
-Queue landing_queue_2 = { .head = 0, .tail = 0, .size = 0 };
-Queue takeoff_queue_1 = { .head = 0, .tail = 0, .size = 0 };
-Queue emergency_queue = { .head = 0, .tail = 0, .size = 0 };
+Queue landing_queue_1 = { .head = 0, .tail = 0, .size = 0, .runway = 1 };
+Queue landing_queue_2 = { .head = 0, .tail = 0, .size = 0, .runway = 2 };
+Queue takeoff_queue_1 = { .head = 0, .tail = 0, .size = 0, .runway = 3 };
+Queue emergency_queue = { .head = 0, .tail = 0, .size = 0, .runway = 0 };
 
 void init_queue(Queue *q) {
     q->head = 0;
@@ -21,6 +21,9 @@ void init_queue(Queue *q) {
 bool enqueue(Queue *q, Airplane plane) {
     if (is_queue_full(q)) return false;
     plane.status = PLANE_QUEUED;
+    if (q->runway != 0)
+        plane.runway = q->runway;
+
     q->data[q->tail] = plane;
     q->tail = (q->tail + 1) % QUEUE_CAPACITY;
     q->size++;

@@ -10,6 +10,7 @@ typedef struct queue {
     int head;
     int tail;
     int size;
+    int runway;
 } Queue;
 
 void init_queue(Queue *q);
